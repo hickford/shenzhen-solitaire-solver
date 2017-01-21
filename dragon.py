@@ -41,11 +41,37 @@ class Board:
         self.cells = [None, None, None]
         self.foundations = OrderedDict((colour, []) for colour in [flower]+list(colours))
 
-    def list_moves(self):
+        self.move_history = list()
+        self.moves_explored = 0
+
+    def list_legal_moves(self):
+        # from cell to foundation
+        # from cell to topmost
+        # from topmost to cell
+        # from topmost to foundation
+        # group from one pile to another
+
+        pass
+
+    def apply_move():
+        pass
+
+    def undo():
         pass
 
     def solve(self):
-        pass
+        if self.solved():
+            return self.move_history
+
+        for move in self.list_legal_moves():
+            self.apply_move(move)
+            success = self.solve()
+            if success:
+                return success
+            self.undo()
+
+    def solved(self):
+        return not(any(self.cells)) and not(any(self.tableau))
 
     def __str__(self):
         header = pretty_row(self.cells, show_empty=True) + "    " + pretty_row([nth(foundation, -1) for foundation in self.foundations.values()], show_empty=True)
