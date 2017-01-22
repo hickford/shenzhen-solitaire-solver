@@ -82,10 +82,10 @@ class Board:
         # check first for automatic move and exclude others?
         # prioritise better moves?
         yield from self.list_moves_to_foundation()
-        yield from self.list_intratableau_moves()
-        yield from self.list_moves_from_cell_to_tableau()
-        yield from self.list_moves_from_tableau_to_cell()
         yield from self.list_dragon_moves()
+        yield from self.list_moves_from_cell_to_tableau()
+        yield from self.list_intratableau_moves()
+        yield from self.list_moves_from_tableau_to_cell()
 
     def list_moves_to_foundation(self):
         """List moves from cell or tableau to foundation"""
@@ -141,10 +141,9 @@ class Board:
             if not destination:
                 continue
 
-            sources = [loc for loc in self.cell_locations + self.foundation_locations if self.topmost(loc).colour == colour and self.topmost(loc).rank == dragon_rank]
+            sources = [loc for loc in self.cell_locations + self.tableau_locations if self.topmost(loc).colour == colour and self.topmost(loc).rank == dragon_rank]
             if len(sources) == 4:
-                assert False
-                yield [Move([card], source, destination) for source in sources] # special compound move
+                yield [Move([self.topmost(source)], source, destination) for source in sources] # special compound move
 
     def apply_move(self, move, record=True):
         if isinstance(move, (list)):
@@ -170,28 +169,33 @@ class Board:
         else:
             self.apply_move(Move(move.cards, move.destination, move.source), record=False)
 
-    def solve(self):
+    def solve(self, verbose=True):
         """Solve by backtracking"""
-        print(self)
+        if verbose:
+            print(self)
         if self.solved():
             return self.move_history
 
         if self.state() in self.states_seen:
-            print("SEEN BEFORE")
+            if verbose:
+                print("SEEN BEFORE")
             return False
 
         self.states_seen.add(self.state())
 
         for move in self.list_legal_moves():
-            print(move)
+            if verbose:
+                print(move)
             self.moves_explored += 1
             self.apply_move(move)
-            success = self.solve()
+            success = self.solve(verbose)
             if success:
                 return success
-            print("BACKTRACK")
+            if verbose:
+                print("BACKTRACK")
             self.undo()
-            print(self)
+            if verbose:
+                print(self)
 
     def solved(self):
         return not(any(self.cells())) and not(any(self.tableau()))
@@ -228,6 +232,5 @@ class Board:
         return "\n" + header + "\n\n" + tableau + "\n"
 
 board = Board()
-board.solve()
-print()
+print(board.solve(verbose=False))
 print(board.moves_explored)
