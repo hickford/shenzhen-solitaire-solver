@@ -1,5 +1,6 @@
 from collections import namedtuple, OrderedDict
 import random
+
 Card = namedtuple('Card', ['colour', 'rank'])
 colours = ['red', 'green', 'black']
 
@@ -39,6 +40,7 @@ def nth(pile, n):
         return Card(None, None)
 
 Move = namedtuple('Move', ['cards', 'source', 'destination'])
+Move.__str__ = lambda move: f"From {move.source} move cards [{' '.join(str(card) for card in move.cards)}] to {move.destination}"
 
 class Board:
     tableau_locations = [f"pile {i}" for i in range(8)]
@@ -85,7 +87,7 @@ class Board:
         for source in self.tableau_locations:
             pile = self.piles[source]
             for j in reversed(range(len(pile))):
-                if j+1 < len(pile) and not legal_on(pile[j], pile[j+1]):
+                if j+1 < len(pile) and not legal_on(pile[j+1], pile[j]):
                     continue
 
                 for destination in self.tableau_locations:
@@ -192,7 +194,7 @@ class Board:
         return nth(self.piles[location], -1)
 
     def state(self):
-        return hash(str(self.piles))
+        return str(self)
 
     def __str__(self):
         header = pretty_row(self.cells(), show_empty=True) + "    " + pretty_row(self.foundations(), show_empty=True)
@@ -200,7 +202,7 @@ class Board:
         max_height = max(len(pile) for pile in self.tableau())
         tableau = "\n".join(pretty_row(nth(pile, h) for pile in self.tableau()) for h in range(max_height))
 
-        return header + "\n\n" + tableau + "\n"
+        return "\n" + header + "\n\n" + tableau + "\n"
 
 board = Board()
 board.solve()
