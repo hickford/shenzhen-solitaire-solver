@@ -3,8 +3,9 @@ import random
 
 Card = namedtuple('Card', ['colour', 'rank'])
 colours = ['red', 'green', 'black']
+dragon_rank = -1
 
-dragons = [Card(colour, "dragon") for colour in colours for i in range(4)]
+dragons = [Card(colour, dragon_rank) for colour in colours for i in range(4)]
 normals = [Card(colour, rank) for colour in colours for rank in range(1,9+1)]
 flower = Card('flower', 1)
 
@@ -16,7 +17,7 @@ def pretty(card, show_empty=False):
         return "--" if show_empty else "  "
     if card.colour == flower:
         return "FL"
-    if card.rank == "dragon":
+    if card.rank == dragon_rank:
         return card.colour[0].upper() * 2
     return card.colour[0] + str(card.rank)
 
@@ -26,7 +27,7 @@ Card.__bool__ = lambda card: bool(card.colour) or bool(card.rank)
 def legal_on(card, other):
     if not other:
         return True
-    if card.rank == "dragon":
+    if card.rank == dragon_rank:
         return False
     return other.rank == card.rank + 1 and other.colour != card.colour
 
@@ -37,7 +38,7 @@ def nth(pile, n):
     try:
         return pile[n]
     except IndexError:
-        return Card(None, None)
+        return Card("", 0)
 
 Move = namedtuple('Move', ['cards', 'source', 'destination'])
 Move.__str__ = lambda move: f"From {move.source} move cards [{' '.join(str(card) for card in move.cards)}] to {move.destination}"
@@ -75,7 +76,7 @@ class Board:
         # from cell or tableau topmost to foundation
         for source in self.cell_locations + self.tableau_locations:
             card = nth(self.piles[source], -1)
-            if not card or card.rank == "dragon":
+            if not card or card.rank == dragon_rank:
                 continue
 
             destination = f"{card.colour} foundation"
@@ -117,11 +118,11 @@ class Board:
 
         # four dragons to one cell (compound move)
         for colour in colours:
-            destination = next(loc for loc in self.cell_locations if not self.piles[loc] or self.topmost(loc).colour == colour and self.topmost(loc).rank == 'dragon')
+            destination = next(loc for loc in self.cell_locations if not self.piles[loc] or self.topmost(loc).colour == colour and self.topmost(loc).rank == dragon_rank)
             if not destination:
                 continue
 
-            sources = [loc for loc in self.cell_locations + self.foundation_locations if self.topmost(loc).colour == colour and self.topmost(loc).rank == 'dragon']
+            sources = [loc for loc in self.cell_locations + self.foundation_locations if self.topmost(loc).colour == colour and self.topmost(loc).rank == dragon_rank]
             if len(sources) == 4:
                 assert False
                 yield [Move([card], source, destination) for source in sources] # special compound move
@@ -194,7 +195,9 @@ class Board:
         return nth(self.piles[location], -1)
 
     def state(self):
-        return str(self)
+        cells = pretty_row(sorted(self.cells()))
+        tableau = " | ".join(pretty_row(pile) for pile in sorted(self.tableau()))
+        return f"cells {cells} tableau {tableau}"
 
     def __str__(self):
         header = pretty_row(self.cells(), show_empty=True) + "    " + pretty_row(self.foundations(), show_empty=True)
