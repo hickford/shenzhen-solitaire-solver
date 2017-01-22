@@ -68,7 +68,7 @@ class Board:
 
     def list_legal_moves(self):
         """List all legal moves."""
-        # put automatic moves first and exclude others?
+        # check first for automatic move and exclude others?
 
         # from cell or tableau topmost to foundation
         for source in self.cell_locations + self.tableau_locations:
@@ -115,21 +115,37 @@ class Board:
 
         # four dragons to one cell (compound move)
         for colour in colours:
-            pass
-            # yield []
+            destination = next(loc for loc in self.cell_locations if not self.piles[loc] or self.topmost(loc).colour == colour and self.topmost(loc).rank == 'dragon')
+            if not destination:
+                continue
+
+            sources = [loc for loc in self.cell_locations + self.foundation_locations if self.topmost(loc).colour == colour and self.topmost(loc).rank == 'dragon']
+            if len(sources) == 4:
+                assert False
+                yield [Move([card], source, destination) for source in sources] # special compound move
 
     def apply_move(self, move, record=True):
-        n = len(move.cards)
-        assert self.piles[move.source][-n:] == move.cards
-        self.piles[move.source] = self.piles[move.source][:-n]
-        self.piles[move.destination] = self.piles[move.destination] + move.cards
+        if isinstance(move, (list)):
+            for step in move:
+                self.apply_move(step, record=False)
+        else:
+            n = len(move.cards)
+            assert self.piles[move.source][-n:] == move.cards
+            self.piles[move.source] = self.piles[move.source][:-n]
+            self.piles[move.destination] = self.piles[move.destination] + move.cards
+
         if record:
             self.move_history.append(move)
 
     def undo(self):
         """Undo most recent move"""
         move = self.move_history.pop()
-        self.apply_move(Move(move.cards, move.destination, move.source), record=False)
+
+        if isinstance(move, list):
+            for step in reversed(move):
+                self.apply_move(Move(step.cards, step.destination, step.source), record=False)
+        else:
+            self.apply_move(Move(move.cards, move.destination, move.source), record=False)
 
     def solve(self):
         """Solve by backtracking"""
