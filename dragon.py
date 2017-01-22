@@ -117,6 +117,9 @@ class Board:
     def list_moves_from_cell_to_tableau(self):
         # from cell to tableau topmost
         for source in self.cell_locations:
+            if len(self.piles[source]) == 4:
+                continue # four dragons
+
             card = self.topmost(source)
             if not card:
                 continue
@@ -198,13 +201,11 @@ class Board:
                 print(self)
 
     def solved(self):
-        return not(any(self.cells())) and not(any(self.tableau()))
+        return not(any(self.tableau()))
 
     def cells(self):
         """List topmost card or None in each cell"""
-        cell_piles = [self.piles[loc] for loc in self.cell_locations]
-        assert all(len(pile) <= 1 for pile in cell_piles)
-        return [nth(pile, -1) for pile in cell_piles]
+        return [self.topmost(loc) for loc in self.cell_locations]
 
     def foundations(self):
         """List topmost card in each foundation"""
@@ -232,5 +233,5 @@ class Board:
         return "\n" + header + "\n\n" + tableau + "\n"
 
 board = Board()
-print(board.solve(verbose=False))
+print(board.solve(verbose=True))
 print(board.moves_explored)
