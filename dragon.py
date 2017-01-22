@@ -49,7 +49,7 @@ class Board:
         self.deal()
 
     def deal(self):
-        self.piles = dict()
+        self.piles = OrderedDict()
         
         random.shuffle(pack)
         tableau = [pack[5*i:5*(i+1)] for i in range(8)]
@@ -64,6 +64,7 @@ class Board:
 
         self.move_history = list()
         self.moves_explored = 0
+        self.states_seen = set()
 
     def list_legal_moves(self):
         # from cell or tableau topmost to foundation
@@ -114,6 +115,8 @@ class Board:
         self.apply_move(Move(move.cards, move.destination, move.source), record=False)
 
     def solve(self):
+        self.states_seen.add(self.state())
+
         """Solve by backtracking"""
         if self.solved():
             return self.move_history
@@ -124,10 +127,12 @@ class Board:
             print(move)
             self.moves_explored += 1
             self.apply_move(move)
-            print(self)
-            success = self.solve()
-            if success:
-                return success
+            if self.state() in self.states_seen:
+                print("SEEN BEFORE")
+            else:
+                success = self.solve()
+                if success:
+                    return success
             print("BACKTRACK")
             self.undo()
             print(board)
@@ -152,6 +157,9 @@ class Board:
     def topmost(self, location):
         """List topmost card in given pile"""
         return nth(self.piles[location], -1)
+
+    def state(self):
+        return hash(str(self.piles))
 
     def __str__(self):
         header = pretty_row(self.cells(), show_empty=True) + "    " + pretty_row(self.foundations(), show_empty=True)
