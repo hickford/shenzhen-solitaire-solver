@@ -20,6 +20,7 @@ def pretty(card, show_empty=False):
     return card.colour[0] + str(card.rank)
 
 Card.__str__ = pretty
+no_card = Card(None, None)
 
 def pretty_row(cards, show_empty=False):
     return " ".join(pretty(card, show_empty) for card in cards)
@@ -59,23 +60,42 @@ class Board:
 
     def list_legal_moves(self):
         # from cell to foundation
+        for source, card in zip(cell_locations, self.cells()):
+            if not card or card.rank == "dragon":
+                continue
+
+            destination = f"{card.colour} foundation"
+            self.piles[destination]
+            if card.rank == 1:
+                yield Move([card], source)
+
         # from cell to topmost
         # from topmost to cell
         # from topmost to foundation
         # group from one pile to another
+        # four dragons to one cell
 
         pass
 
-    def apply_move(self, move):
+    def apply_move(self, move, record=True):
         n = len(move.cards)
+        assert self.piles[source][-n:] == cards
+        self.piles[source] = self.piles[source][:-n]
+        self.piles[destination] = self.piles[destination] + cards
+        if record:
+            self.move_history.append(move)
 
-
-    def undo():
-        pass
+    def undo(self):
+        """Undo most recent move"""
+        move = self.move_history.pop()
+        apply_move(Move(move.cards, move.destination, move.source), record=False)
 
     def solve(self):
+        """Solve by backtracking"""
         if self.solved():
             return self.move_history
+
+        # how to avoid loops? record past state?
 
         for move in self.list_legal_moves():
             self.apply_move(move)
@@ -88,10 +108,10 @@ class Board:
         return not(any(self.cells)) and not(any(self.tableau))
 
     def cells(self):
-        """List card or None in each cell"""
+        """List topmost card or None in each cell"""
         cell_piles = [self.piles[loc] for loc in self.cell_locations]
         assert all(len(pile) <= 1 for pile in cell_piles)
-        return [nth(pile, 0) for pile in cell_piles]
+        return [nth(pile, -1) for pile in cell_piles]
 
     def foundations(self):
         """List top most card in each foundation"""
