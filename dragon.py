@@ -67,6 +67,9 @@ class Board:
         self.states_seen = set()
 
     def list_legal_moves(self):
+        """List all legal moves."""
+        # put automatic moves first and exclude others?
+
         # from cell or tableau topmost to foundation
         for source in self.cell_locations + self.tableau_locations:
             card = nth(self.piles[source], -1)
@@ -92,14 +95,28 @@ class Board:
                     if legal_on(pile[j], self.topmost(destination)):
                         yield Move(pile[j:], source, destination)
 
+        # from cell to tableau topmost
+        for source in self.cell_locations:
+            card = self.topmost(source)
+            if not card:
+                continue
+            for destination in self.tableau_locations:
+                if legal_on(card, self.topmost(destination)):
+                    yield Move([card], source, destination)
+
+        # from topmost to cell
+        first_empty_cell = next(loc for loc in self.cell_locations if not self.piles[loc])
+        if first_empty_cell:
+            destination = first_empty_cell
+            for source in self.tableau_locations:
+                card = self.topmost(source)
+                if card:
+                    yield Move([card], source, destination)
+
         # four dragons to one cell (compound move)
         for colour in colours:
             pass
             # yield []
-
-        # from cell to topmost
-        # from topmost to cell
-        # group from one pile to another
 
     def apply_move(self, move, record=True):
         n = len(move.cards)
@@ -115,27 +132,27 @@ class Board:
         self.apply_move(Move(move.cards, move.destination, move.source), record=False)
 
     def solve(self):
-        self.states_seen.add(self.state())
-
         """Solve by backtracking"""
+        print(self)
         if self.solved():
             return self.move_history
 
-        # how to avoid infinite loops? record past state?
+        if self.state() in self.states_seen:
+            print("SEEN BEFORE")
+            return False
+
+        self.states_seen.add(self.state())
 
         for move in self.list_legal_moves():
             print(move)
             self.moves_explored += 1
             self.apply_move(move)
-            if self.state() in self.states_seen:
-                print("SEEN BEFORE")
-            else:
-                success = self.solve()
-                if success:
-                    return success
+            success = self.solve()
+            if success:
+                return success
             print("BACKTRACK")
             self.undo()
-            print(board)
+            print(self)
 
     def solved(self):
         return not(any(self.cells())) and not(any(self.tableau()))
@@ -170,7 +187,6 @@ class Board:
         return header + "\n\n" + tableau + "\n"
 
 board = Board()
-print(board)
 board.solve()
 print()
 print(board.moves_explored)
