@@ -76,6 +76,7 @@ class Board:
         self.move_history = list()
         self.moves_explored = 0
         self.states_seen = set()
+        self.initial = str(self)
 
     def list_legal_moves(self):
         """List all legal moves."""
