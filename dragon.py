@@ -242,11 +242,11 @@ class Board:
             print(screenshot)
             time.sleep(0.5)
 
-
-board = Board()
-print(board)
-board.solve(verbose=False)
-print(f"Solution in {len(board.move_history)} moves")
-print(f"Explored {board.moves_explored} moves to find solution")
-
-board.replay()
+games = list()
+while True:
+    board = Board()
+    games.append(board)
+    print(board)
+    board.solve(verbose=False)
+    print(f"Solution in {len(board.move_history)} moves")
+    print(f"Explored {board.moves_explored} moves to find solution")
