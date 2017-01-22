@@ -22,6 +22,13 @@ def pretty(card, show_empty=False):
 Card.__str__ = pretty
 Card.__bool__ = lambda card: bool(card.colour) or bool(card.rank)
 
+def legal_on(card, other):
+    if not other:
+        return True
+    if card.rank == "dragon":
+        return False
+    return other.rank == card.rank + 1 and other.colour != card.colour
+
 def pretty_row(cards, show_empty=False):
     return " ".join(pretty(card, show_empty) for card in cards)
 
@@ -59,7 +66,7 @@ class Board:
         self.moves_explored = 0
 
     def list_legal_moves(self):
-        # from cell or tableau to foundation
+        # from cell or tableau topmost to foundation
         for source in self.cell_locations + self.tableau_locations:
             card = nth(self.piles[source], -1)
             if not card or card.rank == "dragon":
@@ -70,11 +77,28 @@ class Board:
             if card.rank == 1 or foundation_card.rank == card.rank - 1:
                 yield Move([card], source, destination)
 
+        # between foundations
+        for source in self.tableau_locations:
+            pile = self.piles[source]
+            for j in reversed(range(len(pile))):
+                if j+1 < len(pile) and not legal_on(pile[j], pile[j+1]):
+                    continue
+
+                for destination in self.tableau_locations:
+                    if source == destination:
+                        continue
+
+                    if legal_on(pile[j], self.topmost(destination)):
+                        yield Move(pile[j:], source, destination)
+
+        # four dragons to one cell (compound move)
+        for colour in colours:
+            pass
+            # yield []
+
         # from cell to topmost
         # from topmost to cell
-        # from topmost to foundation
         # group from one pile to another
-        # four dragons to one cell
 
     def apply_move(self, move, record=True):
         n = len(move.cards)
@@ -94,7 +118,7 @@ class Board:
         if self.solved():
             return self.move_history
 
-        # how to avoid loops? record past state?
+        # how to avoid infinite loops? record past state?
 
         for move in self.list_legal_moves():
             print(move)
@@ -125,9 +149,9 @@ class Board:
         """List piles in tableau (list of lists)"""
         return [self.piles[loc] for loc in self.tableau_locations]
 
-    def topmost(self):
-        """List topmost card in each tableau pile"""
-        return [nth(pile, -1) for pile in self.tableau()]
+    def topmost(self, location):
+        """List topmost card in given pile"""
+        return nth(self.piles[location], -1)
 
     def __str__(self):
         header = pretty_row(self.cells(), show_empty=True) + "    " + pretty_row(self.foundations(), show_empty=True)
