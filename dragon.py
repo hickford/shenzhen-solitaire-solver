@@ -80,8 +80,15 @@ class Board:
     def list_legal_moves(self):
         """List all legal moves."""
         # check first for automatic move and exclude others?
+        # prioritise better moves?
+        yield from self.list_moves_to_foundation()
+        yield from self.list_intratableau_moves()
+        yield from self.list_moves_from_cell_to_tableau()
+        yield from self.list_moves_from_tableau_to_cell()
+        yield from self.list_dragon_moves()
 
-        # from cell or tableau topmost to foundation
+    def list_moves_to_foundation(self):
+        """List moves from cell or tableau to foundation"""
         for source in self.cell_locations + self.tableau_locations:
             card = nth(self.piles[source], -1)
             if not card or card.rank == dragon_rank:
@@ -92,7 +99,8 @@ class Board:
             if card.rank == 1 or foundation_card.rank == card.rank - 1:
                 yield Move([card], source, destination)
 
-        # between foundations
+    def list_intratableau_moves(self):
+        # between tableau moves
         for source in self.tableau_locations:
             pile = self.piles[source]
             for j in reversed(range(len(pile))):
@@ -106,6 +114,7 @@ class Board:
                     if legal_on(pile[j], self.topmost(destination)):
                         yield Move(pile[j:], source, destination)
 
+    def list_moves_from_cell_to_tableau(self):
         # from cell to tableau topmost
         for source in self.cell_locations:
             card = self.topmost(source)
@@ -115,6 +124,7 @@ class Board:
                 if legal_on(card, self.topmost(destination)):
                     yield Move([card], source, destination)
 
+    def list_moves_from_tableau_to_cell(self):
         # from topmost to cell
         first_empty_cell = next(loc for loc in self.cell_locations if not self.piles[loc])
         if first_empty_cell:
@@ -124,6 +134,7 @@ class Board:
                 if card:
                     yield Move([card], source, destination)
 
+    def list_dragon_moves(self):
         # four dragons to one cell (compound move)
         for colour in colours:
             destination = next(loc for loc in self.cell_locations if not self.piles[loc] or self.topmost(loc).colour == colour and self.topmost(loc).rank == dragon_rank)
@@ -143,6 +154,7 @@ class Board:
             n = len(move.cards)
             assert self.piles[move.source][-n:] == move.cards
             self.piles[move.source] = self.piles[move.source][:-n]
+            # check legality?
             self.piles[move.destination] = self.piles[move.destination] + move.cards
 
         if record:
