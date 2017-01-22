@@ -1,4 +1,5 @@
 from collections import namedtuple, OrderedDict
+import time
 import random
 
 Card = namedtuple('Card', ['colour', 'rank'])
@@ -76,7 +77,7 @@ class Board:
         self.move_history = list()
         self.moves_explored = 0
         self.states_seen = set()
-        self.initial = str(self)
+        self.history = [str(self)]
 
     def list_legal_moves(self):
         """List all legal moves."""
@@ -162,10 +163,12 @@ class Board:
 
         if record:
             self.move_history.append(move)
+            self.history.append(str(self))
 
     def undo(self):
         """Undo most recent move"""
         move = self.move_history.pop()
+        self.history.pop()
 
         if isinstance(move, list):
             for step in reversed(move):
@@ -233,6 +236,17 @@ class Board:
 
         return "\n" + header + "\n\n" + tableau + "\n"
 
+    def replay(self):
+        for screenshot, move in zip(self.history[1:], self.move_history):
+            print(move)
+            print(screenshot)
+            time.sleep(0.5)
+
+
 board = Board()
-print(board.solve(verbose=True))
-print(board.moves_explored)
+print(board)
+board.solve(verbose=False)
+print(f"Solution in {len(board.move_history)} moves")
+print(f"Explored {board.moves_explored} moves to find solution")
+
+board.replay()
