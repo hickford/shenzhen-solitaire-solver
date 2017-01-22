@@ -41,7 +41,15 @@ def nth(pile, n):
         return Card("", 0)
 
 Move = namedtuple('Move', ['cards', 'source', 'destination'])
-Move.__str__ = lambda move: f"From {move.source} move cards [{' '.join(str(card) for card in move.cards)}] to {move.destination}"
+
+def describe_move(move):
+    if len(move.cards) == 1:
+        cards = "card " + str(move.cards[0])
+    else:
+        cards = f"cards [{' '.join(str(card) for card in move.cards)}]"
+    return f"Move {cards} from {move.source} move to {move.destination}"
+
+Move.__str__ = describe_move
 
 class Board:
     tableau_locations = [f"pile {i}" for i in range(8)]
