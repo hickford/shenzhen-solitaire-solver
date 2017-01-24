@@ -178,31 +178,38 @@ class Board:
 
     def solve(self, verbose=True):
         """Solve by backtracking"""
-        if verbose:
-            print(self)
-        if self.solved():
-            return self.move_history
-
-        if self.state() in self.states_seen:
-            if verbose:
-                print("SEEN BEFORE")
-            return False
-
+        moves = [list(self.list_legal_moves())]
         self.states_seen.add(self.state())
 
-        for move in self.list_legal_moves():
-            if verbose:
-                print(move)
-            self.moves_explored += 1
-            self.apply_move(move)
-            success = self.solve(verbose)
-            if success:
-                return success
-            if verbose:
-                print("BACKTRACK")
-            self.undo()
-            if verbose:
-                print(self)
+        while moves:
+            if moves[-1]:
+                move = moves[-1].pop(0)
+                if verbose:
+                    print(move)
+
+                self.moves_explored += 1
+                self.apply_move(move)
+
+                if verbose:
+                    print(self)
+                if self.solved():
+                    return self.move_history
+
+                if self.state() in self.states_seen:
+                    moves.append(list())
+                    if verbose:
+                        print("SEEN BEFORE")
+                else:
+                    moves.append(list(self.list_legal_moves()))
+                    self.states_seen.add(self.state())
+            else:
+                moves.pop(-1)
+                if verbose:
+                    print("BACKTRACK")
+                self.undo()
+                if verbose:
+                    print(self)
+
 
     def solved(self):
         return not(any(self.tableau()))
