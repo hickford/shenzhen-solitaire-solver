@@ -1,6 +1,7 @@
 from collections import namedtuple, OrderedDict
 import time
 import random
+import math
 
 Card = namedtuple('Card', ['colour', 'rank'])
 colours = ['red', 'green', 'black']
@@ -83,14 +84,20 @@ class Board:
         """List all legal moves."""
         # check first for automatic move and exclude others?
         # prioritise better moves?
-        yield from self.list_moves_to_foundation()
+        automatic_moves = list(self.list_moves_to_foundation(only_automatic=True))
+        if automatic_moves:
+            yield from automatic_moves
+            return
+
         yield from self.list_dragon_moves()
+        yield from self.list_moves_to_foundation()
         yield from self.list_moves_from_cell_to_tableau()
         yield from self.list_intratableau_moves()
         yield from self.list_moves_from_tableau_to_cell()
 
-    def list_moves_to_foundation(self):
+    def list_moves_to_foundation(self, only_automatic=False):
         """List moves from cell or tableau to foundation"""
+        min_foundation = min(nth(self.piles[loc], -1).rank for loc in self.foundation_locations)
         for source in self.cell_locations + self.tableau_locations:
             card = nth(self.piles[source], -1)
             if not card or card.rank == dragon_rank:
@@ -99,7 +106,8 @@ class Board:
             destination = f"{card.colour} foundation"
             foundation_card = nth(self.piles[destination], -1)
             if card.rank == 1 or foundation_card.rank == card.rank - 1:
-                yield Move([card], source, destination)
+                if not only_automatic or card.rank <= 2 or card.rank <= min_foundation + 1:
+                    yield Move([card], source, destination)
 
     def list_intratableau_moves(self):
         # between tableau moves
@@ -188,7 +196,8 @@ class Board:
                 moves.pop(-1)
                 if verbose:
                     print("BACKTRACK")
-                self.undo()
+                if self.move_history:
+                    self.undo()
                 if verbose:
                     print(self)
                 continue
@@ -251,11 +260,24 @@ class Board:
             print(screenshot)
             time.sleep(0.5)
 
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("reps", type=int, default=math.inf, nargs="?")
+parser.add_argument("--seed", type=int)
+args = parser.parse_args()
+
+if args.seed:
+    random.seed(args.seed)
+
 games = list()
-while True:
+i = 0
+while i < args.reps:
+    i += 1
     board = Board()
     games.append(board)
     print(board)
-    board.solve(verbose=False)
-    print(f"Solution in {len(board.move_history)} moves")
-    print(f"Explored {board.moves_explored} moves to find solution")
+    if board.solve(verbose=False):
+        print(f"Solution in {len(board.move_history)} moves")
+    else:
+        print("IMPOSSIBLE")
+    print(f"Explored {board.moves_explored} moves")
