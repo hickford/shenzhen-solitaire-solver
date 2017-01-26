@@ -78,7 +78,6 @@ class Board:
         self.move_history = list()
         self.moves_explored = 0
         self.states_seen = set()
-        self.history = [str(self)]
 
     def list_legal_moves(self):
         """List all legal moves."""
@@ -171,12 +170,10 @@ class Board:
 
         if record:
             self.move_history.append(move)
-            self.history.append(str(self))
 
     def undo(self):
         """Undo most recent move"""
         move = self.move_history.pop()
-        self.history.pop()
 
         if isinstance(move, list):
             for step in reversed(move):
