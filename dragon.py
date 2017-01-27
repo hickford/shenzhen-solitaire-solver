@@ -274,6 +274,9 @@ args = parser.parse_args()
 if args.seed:
     random.seed(args.seed)
 
+import time
+import statistics
+
 games = list()
 i = 0
 while i < args.reps:
@@ -281,7 +284,10 @@ while i < args.reps:
     board = Board()
     games.append(board)
     print(board)
-    if board.solve(verbose=False):
+    start = time.time()
+    board.solution = board.solve(verbose=False)
+    board.time_to_solve = time.time() - start
+    if board.solution:
         print(f"Solution in {len(board.move_history)} moves")
     else:
         print("IMPOSSIBLE")
