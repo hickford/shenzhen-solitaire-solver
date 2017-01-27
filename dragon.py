@@ -56,7 +56,8 @@ Move.__str__ = describe_move
 class Board:
     tableau_locations = [f"pile {i}" for i in range(8)]
     cell_locations = [f"cell {i}" for i in range(3)]
-    foundation_locations = [f"{colour} foundation" for colour in ['flower'] + colours]
+    foundation_locations_by_colour = OrderedDict((colour, f"{colour} foundation") for colour in ['flower'] + colours)
+    foundation_locations = foundation_locations_by_colour.values()
 
     def __init__(self):
         self.deal()
@@ -96,14 +97,14 @@ class Board:
 
     def list_moves_to_foundation(self, only_automatic=False):
         """List moves from cell or tableau to foundation"""
-        min_foundation = min(nth(self.piles[loc], -1).rank for loc in self.foundation_locations)
+        min_foundation = min(self.topmost(loc).rank for loc in self.foundation_locations)
         for source in self.cell_locations + self.tableau_locations:
-            card = nth(self.piles[source], -1)
+            card = self.topmost(source)
             if not card or card.rank == dragon_rank:
                 continue
 
-            destination = f"{card.colour} foundation"
-            foundation_card = nth(self.piles[destination], -1)
+            destination = self.foundation_locations_by_colour[card.colour]
+            foundation_card = self.topmost(destination)
             if card.rank == 1 or foundation_card.rank == card.rank - 1:
                 if not only_automatic or card.rank <= 2 or card.rank <= min_foundation + 1:
                     yield Move([card], source, destination)
@@ -239,9 +240,7 @@ class Board:
         return nth(self.piles[location], -1)
 
     def state(self):
-        cells = pretty_row(sorted(self.cells()))
-        tableau = " | ".join(pretty_row(pile) for pile in sorted(self.tableau()))
-        return f"cells {cells} tableau {tableau}"
+        return hash(tuple(sorted(self.cells()) + [tuple(pile) for pile in sorted(self.tableau())]))
 
     def __str__(self):
         header = pretty_row(self.cells(), show_empty=True) + "    " + pretty_row(self.foundations(), show_empty=True)
