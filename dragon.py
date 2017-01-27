@@ -24,7 +24,10 @@ def pretty(card, show_empty=False):
     return card.colour[0] + str(card.rank)
 
 Card.__str__ = pretty
-Card.__bool__ = lambda card: bool(card.colour) or bool(card.rank)
+
+def _card_bool(card):
+    return bool(card.colour) or bool(card.rank)
+Card.__bool__ = _card_bool
 
 def legal_on(card, other):
     if not other:
@@ -237,7 +240,8 @@ class Board:
 
     def topmost(self, location):
         """List topmost card in given pile"""
-        return nth(self.piles[location], -1)
+        pile = self.piles[location]
+        return pile[-1] if pile else Card("", 0)
 
     def state(self):
         return hash(tuple(sorted(self.cells()) + [tuple(pile) for pile in sorted(self.tableau())]))
