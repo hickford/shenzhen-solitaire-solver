@@ -255,9 +255,14 @@ class Board:
         return "\n" + header + "\n\n" + tableau + "\n"
 
     def replay(self):
-        for screenshot, move in zip(self.history[1:], self.move_history):
+        moves = self.move_history[:]
+        while self.move_history:
+            self.undo()
+        print(self)
+        for move in moves:
             print(move)
-            print(screenshot)
+            self.apply_move(move)
+            print(self)
             time.sleep(0.5)
 
 import argparse
