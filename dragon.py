@@ -142,7 +142,7 @@ class Board:
 
     def list_moves_from_tableau_to_cell(self):
         # from topmost to cell
-        first_empty_cell = next(loc for loc in self.cell_locations if not self.piles[loc])
+        first_empty_cell = next((loc for loc in self.cell_locations if not self.piles[loc]), None)
         if first_empty_cell:
             destination = first_empty_cell
             for source in self.tableau_locations:
@@ -153,7 +153,7 @@ class Board:
     def list_dragon_moves(self):
         # four dragons to one cell (compound move)
         for colour in colours:
-            destination = next(loc for loc in self.cell_locations if not self.piles[loc] or self.topmost(loc).colour == colour and self.topmost(loc).rank == dragon_rank)
+            destination = next((loc for loc in self.cell_locations if not self.piles[loc] or self.topmost(loc).colour == colour and self.topmost(loc).rank == dragon_rank), None)
             if not destination:
                 continue
 
